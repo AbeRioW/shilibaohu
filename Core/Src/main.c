@@ -130,6 +130,9 @@ int main(void)
     /* USER CODE BEGIN 3 */
     // 1. 读取光照值 (ADC范围0-4095)
     static uint8_t current_level = 0; // 当前档位 (0-4)
+    static uint8_t alarm_sent = 0; // 距离报警标志
+    static uint8_t dark_sent = 0;    // 光线过暗报警标志
+    static uint8_t bright_sent = 0;  // 光线过亮报警标志
     uint16_t light_value = ADC_Read();
     
     // 2. 5个档位 + 滞回（Hysteresis）避免边界抖动
@@ -159,13 +162,38 @@ int main(void)
     uint16_t pwm_levels[5] = {65535, 49152, 32768, 16384, 0};
     PWM_SetDutyCycle(pwm_levels[current_level]);
     
-    // 4. 发送光照值
+    // 4. 光线报警（0档过暗，4档过亮）
+    if (current_level == 0 && !dark_sent) {
+      USART2_SendDark();
+      dark_sent = 1;
+      bright_sent = 0; // 清除其他标志
+    } else if (current_level == 4 && !bright_sent) {
+      USART2_SendBright();
+      bright_sent = 1;
+      dark_sent = 0; // 清除其他标志
+    } else if (current_level > 0 && current_level < 4) {
+      // 中间档位，清除两个标志
+      dark_sent = 0;
+      bright_sent = 0;
+    }
+    
+    // 5. 发送光照值
     USART1_SendLight(light_value);
     
-    // 5. HC-SR04测距
+    // 6. HC-SR04测距
     float distance = HCSR04_Measure();
     if (distance > 0) {
       USART1_SendDistance(distance);
+      
+      // 7. 距离低于5cm时，通过USART2发送报警
+      if (distance < 5.0f && !alarm_sent) {
+        USART2_SendWarning();
+        alarm_sent = 1;
+      } 
+      // 距离超过5cm时，清除报警标志
+      else if (distance >= 5.0f) {
+        alarm_sent = 0;
+      }
     }
     
     HAL_Delay(500);

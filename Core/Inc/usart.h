@@ -45,6 +45,8 @@ void MX_USART2_UART_Init(void);
 
 /* USER CODE BEGIN Prototypes */
 void USART2_SendWarning(void);
+void USART2_SendDark(void);
+void USART2_SendBright(void);
 void USART1_SendDistance(float distance);
 void USART1_SendLight(uint16_t light);
 /* USER CODE END Prototypes */

@@ -199,6 +199,18 @@ void USART2_SendWarning(void)
   HAL_UART_Transmit(&huart2, warning_data, sizeof(warning_data), HAL_MAX_DELAY);
 }
 
+void USART2_SendDark(void)
+{
+  uint8_t dark_data[] = {0xFD, 0x00, 0x0E, 0x01, 0x04, 0xE5, 0x85, 0x89, 0xE7, 0xBA, 0xBF, 0xE8, 0xBF, 0x87, 0xE6, 0x9A, 0x97};
+  HAL_UART_Transmit(&huart2, dark_data, sizeof(dark_data), HAL_MAX_DELAY);
+}
+
+void USART2_SendBright(void)
+{
+  uint8_t bright_data[] = {0xFD, 0x00, 0x0E, 0x01, 0x04, 0xE5, 0x85, 0x89, 0xE7, 0xBA, 0xBF, 0xE8, 0xBF, 0x87, 0xE4, 0xBA, 0xAE};
+  HAL_UART_Transmit(&huart2, bright_data, sizeof(bright_data), HAL_MAX_DELAY);
+}
+
 void USART1_SendDistance(float distance)
 {
   char buffer[32];
