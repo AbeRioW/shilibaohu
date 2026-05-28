@@ -4,6 +4,7 @@
 "shilibaohu\gpio.o"
 "shilibaohu\adc.o"
 "shilibaohu\tim.o"
+"shilibaohu\usart.o"
 "shilibaohu\stm32f1xx_it.o"
 "shilibaohu\stm32f1xx_hal_msp.o"
 "shilibaohu\stm32f1xx_hal_gpio_ex.o"
@@ -21,6 +22,7 @@
 "shilibaohu\stm32f1xx_hal_exti.o"
 "shilibaohu\stm32f1xx_hal_tim.o"
 "shilibaohu\stm32f1xx_hal_tim_ex.o"
+"shilibaohu\stm32f1xx_hal_uart.o"
 "shilibaohu\system_stm32f1xx.o"
 --strict --scatter "shilibaohu\shilibaohu.sct"
 --summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols

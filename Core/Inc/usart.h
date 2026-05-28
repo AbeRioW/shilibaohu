@@ -1,9 +1,9 @@
 /* USER CODE BEGIN Header */
 /**
   ******************************************************************************
-  * @file    tim.h
+  * @file    usart.h
   * @brief   This file contains all the function prototypes for
-  *          the tim.c file
+  *          the usart.c file
   ******************************************************************************
   * @attention
   *
@@ -18,8 +18,8 @@
   */
 /* USER CODE END Header */
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __TIM_H__
-#define __TIM_H__
+#ifndef __USART_H__
+#define __USART_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,26 +32,26 @@ extern "C" {
 
 /* USER CODE END Includes */
 
-extern TIM_HandleTypeDef htim2;
+extern UART_HandleTypeDef huart1;
+
+extern UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN Private defines */
-#define HCSR04_TRIG_PIN GPIO_PIN_8
-#define HCSR04_TRIG_PORT GPIOB
-#define HCSR04_MAX_DISTANCE_CM 600
+
 /* USER CODE END Private defines */
 
-void MX_TIM2_Init(void);
-
-void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
+void MX_USART1_UART_Init(void);
+void MX_USART2_UART_Init(void);
 
 /* USER CODE BEGIN Prototypes */
-float HCSR04_Measure(void);
-void PWM_SetDutyCycle(uint16_t duty);
+void USART2_SendWarning(void);
+void USART1_SendDistance(float distance);
+void USART1_SendLight(uint16_t light);
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __TIM_H__ */
+#endif /* __USART_H__ */
 

@@ -53,10 +53,12 @@ extern "C" {
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
-
+void HAL_DelayUs(uint32_t us);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define Echo_Pin GPIO_PIN_3
+#define Echo_GPIO_Port GPIOB
 #define Trig_Pin GPIO_PIN_8
 #define Trig_GPIO_Port GPIOB
 

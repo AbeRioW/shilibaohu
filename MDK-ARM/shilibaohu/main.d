@@ -29,6 +29,10 @@ shilibaohu\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_flash_ex.h
 shilibaohu\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_pwr.h
 shilibaohu\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim.h
 shilibaohu\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim_ex.h
+shilibaohu\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_uart.h
 shilibaohu\main.o: ../Core/Inc/adc.h
 shilibaohu\main.o: ../Core/Inc/tim.h
+shilibaohu\main.o: ../Core/Inc/usart.h
 shilibaohu\main.o: ../Core/Inc/gpio.h
+shilibaohu\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\string.h
+shilibaohu\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h

@@ -20,11 +20,13 @@
 #include "main.h"
 #include "adc.h"
 #include "tim.h"
+#include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <string.h>
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -45,8 +47,6 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-uint16_t adc_value = 0;
-uint16_t pwm_duty = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -57,7 +57,31 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+void HAL_DelayUs(uint32_t us)
+{
+  uint32_t start = SysTick->VAL;
+  uint32_t ticks = us * (SystemCoreClock / 1000000);
+  uint32_t elapsed = 0;
+  
+  while (elapsed < ticks) {
+    uint32_t current = SysTick->VAL;
+    if (current <= start) {
+      elapsed = start - current;
+    } else {
+      elapsed = start + (SysTick->LOAD - current);
+    }
+  }
+}
 
+// ADC读取函数
+uint16_t ADC_Read(void)
+{
+  HAL_ADC_Start(&hadc1);
+  if (HAL_ADC_PollForConversion(&hadc1, 10) == HAL_OK) {
+    return HAL_ADC_GetValue(&hadc1);
+  }
+  return 0;
+}
 /* USER CODE END 0 */
 
 /**
@@ -91,8 +115,10 @@ int main(void)
   MX_GPIO_Init();
   MX_ADC1_Init();
   MX_TIM2_Init();
+  MX_USART2_UART_Init();
+  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
+  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1); // 启动PWM
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -102,15 +128,47 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    HAL_ADC_Start(&hadc1);
-    if (HAL_ADC_PollForConversion(&hadc1, 10) == HAL_OK)
-    {
-      adc_value = HAL_ADC_GetValue(&hadc1);
-      pwm_duty = 999 - (adc_value * 999 / 4095);
-      __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, pwm_duty);
+    // 1. 读取光照值 (ADC范围0-4095)
+    static uint8_t current_level = 0; // 当前档位 (0-4)
+    uint16_t light_value = ADC_Read();
+    
+    // 2. 5个档位 + 滞回（Hysteresis）避免边界抖动
+    // 每个档位有50的滞回区间
+    switch (current_level) {
+      case 0:
+        if (light_value > 869) current_level = 1;
+        break;
+      case 1:
+        if (light_value < 769) current_level = 0;
+        else if (light_value > 1688) current_level = 2;
+        break;
+      case 2:
+        if (light_value < 1588) current_level = 1;
+        else if (light_value > 2507) current_level = 3;
+        break;
+      case 3:
+        if (light_value < 2407) current_level = 2;
+        else if (light_value > 3326) current_level = 4;
+        break;
+      case 4:
+        if (light_value < 3226) current_level = 3;
+        break;
     }
-    HAL_ADC_Stop(&hadc1);
-    HAL_Delay(100);
+    
+    // 3. 根据档位设置PWM (反转逻辑：暗->亮)
+    uint16_t pwm_levels[5] = {65535, 49152, 32768, 16384, 0};
+    PWM_SetDutyCycle(pwm_levels[current_level]);
+    
+    // 4. 发送光照值
+    USART1_SendLight(light_value);
+    
+    // 5. HC-SR04测距
+    float distance = HCSR04_Measure();
+    if (distance > 0) {
+      USART1_SendDistance(distance);
+    }
+    
+    HAL_Delay(500);
   }
   /* USER CODE END 3 */
 }
