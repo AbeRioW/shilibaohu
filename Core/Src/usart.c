@@ -21,7 +21,11 @@
 #include "usart.h"
 
 /* USER CODE BEGIN 0 */
-
+#define RX_BUFFER_SIZE 32
+uint8_t rx_buffer[RX_BUFFER_SIZE];
+uint8_t rx_data;
+volatile uint8_t rx_index = 0;
+volatile uint8_t rx_complete = 0;
 /* USER CODE END 0 */
 
 UART_HandleTypeDef huart1;
@@ -223,6 +227,40 @@ void USART1_SendLight(uint16_t light)
   char buffer[32];
   int len = snprintf(buffer, sizeof(buffer), "Light:%d\r\n", light);
   HAL_UART_Transmit(&huart1, (uint8_t*)buffer, len, HAL_MAX_DELAY);
+}
+
+// 启动USART1接收
+void USART1_StartRx(void)
+{
+  HAL_UART_Receive_IT(&huart1, &rx_data, 1);
+}
+
+// 处理接收到的数据
+void USART1_ProcessCommand(void)
+{
+  if (rx_complete) {
+    rx_buffer[rx_index] = '\0';
+    if (strstr((char*)rx_buffer, "led:on")) {
+      LED_ManualOn();
+    } else if (strstr((char*)rx_buffer, "led:off")) {
+      LED_ManualOff();
+    }
+    rx_index = 0;
+    rx_complete = 0;
+  }
+}
+
+// HAL UART接收回调函数
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+  if (huart->Instance == USART1) {
+    if (rx_data == '\n' || rx_data == '\r') {
+      rx_complete = 1;
+    } else if (rx_index < RX_BUFFER_SIZE - 1) {
+      rx_buffer[rx_index++] = rx_data;
+    }
+    HAL_UART_Receive_IT(&huart1, &rx_data, 1);
+  }
 }
 /* USER CODE END 1 */
 

@@ -54,6 +54,8 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
 void HAL_DelayUs(uint32_t us);
+void LED_ManualOn(void);
+void LED_ManualOff(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/

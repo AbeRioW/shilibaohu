@@ -49,6 +49,8 @@ void USART2_SendDark(void);
 void USART2_SendBright(void);
 void USART1_SendDistance(float distance);
 void USART1_SendLight(uint16_t light);
+void USART1_StartRx(void);
+void USART1_ProcessCommand(void);
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus
