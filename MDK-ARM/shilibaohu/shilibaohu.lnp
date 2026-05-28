@@ -1,0 +1,28 @@
+--cpu Cortex-M3
+"shilibaohu\startup_stm32f103xb.o"
+"shilibaohu\main.o"
+"shilibaohu\gpio.o"
+"shilibaohu\adc.o"
+"shilibaohu\tim.o"
+"shilibaohu\stm32f1xx_it.o"
+"shilibaohu\stm32f1xx_hal_msp.o"
+"shilibaohu\stm32f1xx_hal_gpio_ex.o"
+"shilibaohu\stm32f1xx_hal_adc.o"
+"shilibaohu\stm32f1xx_hal_adc_ex.o"
+"shilibaohu\stm32f1xx_hal.o"
+"shilibaohu\stm32f1xx_hal_rcc.o"
+"shilibaohu\stm32f1xx_hal_rcc_ex.o"
+"shilibaohu\stm32f1xx_hal_gpio.o"
+"shilibaohu\stm32f1xx_hal_dma.o"
+"shilibaohu\stm32f1xx_hal_cortex.o"
+"shilibaohu\stm32f1xx_hal_pwr.o"
+"shilibaohu\stm32f1xx_hal_flash.o"
+"shilibaohu\stm32f1xx_hal_flash_ex.o"
+"shilibaohu\stm32f1xx_hal_exti.o"
+"shilibaohu\stm32f1xx_hal_tim.o"
+"shilibaohu\stm32f1xx_hal_tim_ex.o"
+"shilibaohu\system_stm32f1xx.o"
+--strict --scatter "shilibaohu\shilibaohu.sct"
+--summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
+--info sizes --info totals --info unused --info veneers
+--list "shilibaohu.map" -o shilibaohu\shilibaohu.axf
