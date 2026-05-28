@@ -56,6 +56,8 @@ void Error_Handler(void);
 void HAL_DelayUs(uint32_t us);
 void LED_ManualOn(void);
 void LED_ManualOff(void);
+void DistanceThreshold_Set(uint8_t new_thresh);
+extern uint8_t distance_threshold;
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/

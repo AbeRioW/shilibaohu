@@ -49,6 +49,7 @@
 /* USER CODE BEGIN PV */
 volatile uint8_t led_auto_control = 1;  // 1=自动控制，0=手动控制
 volatile uint32_t led_off_timer = 0;    // 用于led:off后的2秒计时
+uint8_t distance_threshold = 5;         // 距离检测阈值，默认5cm
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -59,6 +60,18 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+// Flash配置 - STM32F103xB最后1页用于存储数据
+#define FLASH_USER_START_ADDR   0x0801F800  // 最后1页起始地址
+#define FLASH_USER_END_ADDR     0x0801FFFF  // 最后1页结束地址
+#define FLASH_DATA_MAGIC        0x12345678  // 数据有效标志
+
+// Flash数据结构
+typedef struct {
+  uint32_t magic;           // 数据有效标志
+  uint8_t distance_thresh;  // 距离阈值
+  uint8_t reserved[3];      // 保留字节
+} FlashData_t;
+
 void HAL_DelayUs(uint32_t us)
 {
   uint32_t start = SysTick->VAL;
@@ -83,6 +96,76 @@ uint16_t ADC_Read(void)
     return HAL_ADC_GetValue(&hadc1);
   }
   return 0;
+}
+
+// 从Flash读取数据
+void Flash_ReadData(FlashData_t *data)
+{
+  FlashData_t *flash_ptr = (FlashData_t *)FLASH_USER_START_ADDR;
+  *data = *flash_ptr;
+}
+
+// 写入数据到Flash
+void Flash_WriteData(FlashData_t *data)
+{
+  HAL_FLASH_Unlock();
+  
+  FLASH_EraseInitTypeDef erase_init;
+  uint32_t page_error = 0;
+  
+  erase_init.TypeErase = FLASH_TYPEERASE_PAGES;
+  erase_init.PageAddress = FLASH_USER_START_ADDR;
+  erase_init.NbPages = 1;
+  
+  if (HAL_FLASHEx_Erase(&erase_init, &page_error) == HAL_OK) {
+    uint32_t *src_ptr = (uint32_t *)data;
+    uint32_t *dst_ptr = (uint32_t *)FLASH_USER_START_ADDR;
+    
+    for (uint8_t i = 0; i < sizeof(FlashData_t) / 4; i++) {
+      HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, (uint32_t)(dst_ptr + i), src_ptr[i]);
+    }
+  }
+  
+  HAL_FLASH_Lock();
+}
+
+// 初始化距离阈值，从Flash读取或使用默认值
+void DistanceThreshold_Init(void)
+{
+  FlashData_t flash_data;
+  Flash_ReadData(&flash_data);
+  
+  if (flash_data.magic == FLASH_DATA_MAGIC && 
+      flash_data.distance_thresh >= 0 && 
+      flash_data.distance_thresh <= 20) {
+    distance_threshold = flash_data.distance_thresh;
+  } else {
+    // Flash数据无效，使用默认值并保存
+    distance_threshold = 5;
+    FlashData_t new_data;
+    new_data.magic = FLASH_DATA_MAGIC;
+    new_data.distance_thresh = distance_threshold;
+    new_data.reserved[0] = 0;
+    new_data.reserved[1] = 0;
+    new_data.reserved[2] = 0;
+    Flash_WriteData(&new_data);
+  }
+}
+
+// 设置距离阈值并保存到Flash
+void DistanceThreshold_Set(uint8_t new_thresh)
+{
+  if (new_thresh >= 0 && new_thresh <= 20) {
+    distance_threshold = new_thresh;
+    
+    FlashData_t new_data;
+    new_data.magic = FLASH_DATA_MAGIC;
+    new_data.distance_thresh = distance_threshold;
+    new_data.reserved[0] = 0;
+    new_data.reserved[1] = 0;
+    new_data.reserved[2] = 0;
+    Flash_WriteData(&new_data);
+  }
 }
 
 // 手动控制LED打开（最亮）
@@ -136,6 +219,7 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1); // 启动PWM
+  DistanceThreshold_Init();  // 初始化距离阈值（从Flash读取）
   USART1_StartRx();  // 启动USART1中断接收
   /* USER CODE END 2 */
 
@@ -217,18 +301,18 @@ int main(void)
     if (distance > 0) {
       USART1_SendDistance(distance);
       
-      // 7. 距离低于5cm时，通过USART2发送报警
-      if (distance < 5.0f && !alarm_sent) {
+      // 7. 距离低于阈值时，通过USART2发送报警
+      if (distance < (float)distance_threshold && !alarm_sent) {
         USART2_SendWarning();
         alarm_sent = 1;
       } 
-      // 距离超过5cm时，清除报警标志
-      else if (distance >= 5.0f) {
+      // 距离超过阈值时，清除报警标志
+      else if (distance >= (float)distance_threshold) {
         alarm_sent = 0;
       }
     }
     
-    HAL_Delay(2000);
+    HAL_Delay(3000);
   }
   /* USER CODE END 3 */
 }

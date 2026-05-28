@@ -21,6 +21,9 @@
 #include "usart.h"
 
 /* USER CODE BEGIN 0 */
+#include "main.h"
+#include <stdlib.h>
+#include <string.h>
 #define RX_BUFFER_SIZE 32
 uint8_t rx_buffer[RX_BUFFER_SIZE];
 uint8_t rx_data;
@@ -229,6 +232,13 @@ void USART1_SendLight(uint16_t light)
   HAL_UART_Transmit(&huart1, (uint8_t*)buffer, len, HAL_MAX_DELAY);
 }
 
+void USART1_SendThresholdSet(uint8_t thresh)
+{
+  char buffer[32];
+  int len = snprintf(buffer, sizeof(buffer), "Threshold:%d\r\n", thresh);
+  HAL_UART_Transmit(&huart1, (uint8_t*)buffer, len, HAL_MAX_DELAY);
+}
+
 // 启动USART1接收
 void USART1_StartRx(void)
 {
@@ -244,6 +254,13 @@ void USART1_ProcessCommand(void)
       LED_ManualOn();
     } else if (strstr((char*)rx_buffer, "led:off")) {
       LED_ManualOff();
+    } else if (strncmp((char*)rx_buffer, "set:", 4) == 0) {
+      // 处理set:xxx命令
+      int thresh = atoi((char*)(rx_buffer + 4));
+      if (thresh >= 0 && thresh <= 20) {
+        DistanceThreshold_Set((uint8_t)thresh);
+        USART1_SendThresholdSet((uint8_t)thresh);
+      }
     }
     rx_index = 0;
     rx_complete = 0;
